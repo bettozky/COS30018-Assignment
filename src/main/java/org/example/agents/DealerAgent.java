@@ -11,6 +11,7 @@ public class DealerAgent extends Agent {
     private int minPrice; // Reserve Price
     private int retailPrice;
     private UILogger logger;
+    private int negotiationCount = 0;
 
     protected void setup() {
         Object[] args = getArguments();
@@ -19,6 +20,8 @@ public class DealerAgent extends Agent {
         minPrice = (int)(retailPrice * 0.85); // Won't go below 85%
         logger = (UILogger) args[2];
 
+        log("STATUS: Registered with retail price RM" + retailPrice + ", reserve: RM" + minPrice);
+
         // Register with Broker
         addBehaviour(new OneShotBehaviour() {
             public void action() {
@@ -26,6 +29,7 @@ public class DealerAgent extends Agent {
                 inform.addReceiver(new AID("broker", AID.ISLOCALNAME));
                 inform.setContent(car + ";" + retailPrice);
                 send(inform);
+                log("STATUS: Listed " + car + " on marketplace");
             }
         });
 
@@ -33,26 +37,30 @@ public class DealerAgent extends Agent {
             public void action() {
                 ACLMessage msg = receive();
                 if (msg != null && msg.getPerformative() == ACLMessage.PROPOSE) {
+                    negotiationCount++;
                     int buyerOffer = Integer.parseInt(msg.getContent());
-                    log("Received offer: RM" + buyerOffer);
+                    log("OFFER " + negotiationCount + ": Buyer offered RM" + buyerOffer);
 
                     if (buyerOffer >= minPrice) {
                         ACLMessage accept = msg.createReply();
                         accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
                         accept.setContent(String.valueOf(buyerOffer));
                         send(accept);
-                        log("ACCEPTED offer of RM" + buyerOffer);
+                        log("DEAL CLOSED: Accepted offer of RM" + buyerOffer);
                     } else {
                         int counter = (retailPrice + buyerOffer) / 2;
                         ACLMessage reject = msg.createReply();
                         reject.setPerformative(ACLMessage.REJECT_PROPOSAL);
                         reject.setContent(String.valueOf(counter));
                         send(reject);
-                        log("Counter-offered RM" + counter);
+                        log("COUNTER: Offered RM" + counter);
                     }
                 } else block();
             }
         });
     }
-    private void log(String m) { if (logger != null) logger.log(getLocalName() + ": " + m); }
+
+    private void log(String m) {
+        if (logger != null) logger.log(getLocalName() + ": " + m);
+    }
 }

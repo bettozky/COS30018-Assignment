@@ -19,6 +19,7 @@
    mvn install
    ```
 4. If you encountered any problems with Jade, locally install jade and place it into the root folder of the project and run this command:
+   
    For Linux/MacOS:
    ```bash
    mvn install:install-file -Dfile=jade.jar -DgroupId=com.tilab.jade -DartifactId=jade -Dversion=4.6.0 -Dpackaging=jar
