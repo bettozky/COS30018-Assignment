@@ -79,7 +79,7 @@ public class BrokerAgent extends Agent {
         reply.setPerformative(ACLMessage.PROPOSE);
         reply.setContent(results.length() > 0 ? results.toString() : "NONE");
         send(reply);
-        
+
         if (matchCount > 0) {
             log("SEARCH: Found " + matchCount + " " + target + "(s) for buyer " + msg.getSender().getLocalName());
         } else {
@@ -88,14 +88,21 @@ public class BrokerAgent extends Agent {
     }
 
     private void handleTransaction(ACLMessage msg) {
-        double salePrice = Double.parseDouble(msg.getContent());
+        String[] parts = msg.getContent().split(";");
+        double salePrice = Double.parseDouble(parts[0]);
+        String dealerName = parts.length > 1 ? parts[1] : "Unknown";
+        String carModel   = parts.length > 2 ? parts[2] : "Unknown";
+
         double commission = salePrice * 0.05;
         double totalEarned = commission + 50;
         totalRevenue += totalEarned;
-        
+
         String buyerName = msg.getSender().getLocalName();
-        log("DEAL CONFIRMED: Buyer=" + buyerName + " | Sale=RM" + (int)salePrice + " | Commission=RM" + (int)commission + " | Fee=RM50");
+        transactions.add(new Transaction(buyerName, dealerName, carModel, (int)salePrice));
+
+        log("DEAL CONFIRMED: Buyer=" + buyerName + " | Dealer=" + dealerName + " | Car=" + carModel + " | Sale=RM" + (int)salePrice + " | Commission=RM" + (int)commission + " | Fee=RM50");
         log("REVENUE: RM" + (int)totalEarned + " earned | Total: RM" + (int)totalRevenue);
+        log("TOTAL TRANSACTIONS RECORDED: " + transactions.size());
     }
 
     private void log(String m) {
